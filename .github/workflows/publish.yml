@@ -1,0 +1,36 @@
+name: Publish
+on:
+  release:
+    types: [published]
+permissions:
+  contents: read
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
+jobs:
+  verify:
+    uses: ./.github/workflows/ci.yml
+  publish:
+    needs: verify
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          registry-url: https://registry.npmjs.org
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.4.0'
+      - run: npm install --global npm@11.6.2
+      - run: bun install --frozen-lockfile
+      - run: bun run check:pack
+      - run: bun run test:omp
+      - name: Publish verified tarball using npm OIDC
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: bun scripts/publish.ts
