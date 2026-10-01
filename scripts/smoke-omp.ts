@@ -17,6 +17,7 @@ async function run(args: string[],cwd=path.join(temp,'cwd')) {
  const [code,stdout,stderr]=await Promise.all([p.exited,new Response(p.stdout).text(),new Response(p.stderr).text()]);
  assert.equal(code,0,`${args.join(' ')}\n${stderr}\n${stdout}`);return stdout;
 }
+async function install() {
 const packageSpec=process.env.OMP_KO_TEST_PACKAGE;
 if(packageSpec) await run([...cli,'plugin','install',packageSpec]);
 else {
@@ -27,8 +28,10 @@ else {
 }
 assert((await run([...cli,'plugin','list'])).includes('omp-settings-ko'));
 assert(!(await fs.readdir(path.join(config,'plugins/node_modules'))).includes('@oh-my-pi'),'Host packages must not be installed as runtime peers');
+}
 const launchArgs=[...cli,'--cwd',path.join(temp,'cwd'),'--mode','rpc','--no-session','--no-tools','--no-lsp','--no-pty','--no-skills','--no-rules','--model','openai/gpt-5.2','--api-key','omp-ko-offline-test-not-a-real-key','-e',path.join(import.meta.dir,'probe-extension.ts')];
 interface Report { phase: string; rows: {id:string;ui:{label:string;description:string;options?: {value:string}[]|'runtime'};default?:unknown}[] }
+let baseline: Report["rows"] | undefined;
 async function session(enabled: boolean) {
  await fs.rm(report,{force:true});
  const p=Bun.spawn(launchArgs,{cwd:path.join(temp,'cwd'),env:{...env,OMP_KO_TEST_EXIT:enabled?'0':'1'},stdin:'pipe',stdout:'pipe',stderr:'pipe'});
@@ -41,8 +44,9 @@ async function session(enabled: boolean) {
   assert.equal(first.rows.length,393);
   for(const row of first.rows) {
    const raw=original.find(s=>s.id===row.id)!;
-   assert.deepEqual(row.default,raw.default);
-   if(Array.isArray(row.ui.options)&&Array.isArray(raw.ui.options))assert.deepEqual(row.ui.options.map(o=>o.value),raw.ui.options.map(o=>o.value));
+   if(baseline) assert.deepEqual(row.default,baseline.find(s=>s.id===row.id)!.default);
+   const expectedOptions=baseline?.find(s=>s.id===row.id)?.ui.options;
+   if(Array.isArray(row.ui.options)&&Array.isArray(expectedOptions))assert.deepEqual(row.ui.options.map(o=>o.value),expectedOptions.map(o=>o.value));
    if(enabled)assert(/[가-힣]/.test(row.ui.description),row.id+' description not localized');
    else assert.equal(row.ui.label,raw.ui.label,row.id+' remained localized after uninstall');
   }
@@ -56,9 +60,12 @@ async function session(enabled: boolean) {
   assert.equal(code,0,(await stderr)+'\n'+(await stdout));
   const last=await Bun.file(report).json() as Report;
   if(enabled){assert.equal(last.phase,'after-reload');assert.deepEqual(last.rows,first.rows);}
+  return first.rows;
  } finally {clearTimeout(timer);if(p.exitCode===null)p.kill();}
 }
 try {
+ baseline=await session(false);
+ await install();
  await session(true);
  await run([...cli,'plugin','uninstall','omp-settings-ko']);
  await session(false);
