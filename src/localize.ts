@@ -10,7 +10,6 @@ export interface UI {
 interface Entry { label: string; description: string; warning?: string; options?: Record<string, { label: string; description?: string }> }
 interface Dynamic { parts: string[]; translation: string }
 const catalog = data as { version: string; settings: Record<string, Entry>; dynamic: Record<string, Dynamic> };
-export const supportedVersion = catalog.version;
 const originals = Symbol.for("omp-settings-ko.original-metadata");
 const fields = ["label", "description", "warning", "options"] as const;
 const patterns = new Map(Object.entries(catalog.dynamic).map(([id, entry]) => [id, {

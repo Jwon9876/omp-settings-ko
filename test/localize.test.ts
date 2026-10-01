@@ -38,3 +38,10 @@ test("unknown settings and immutable metadata remain intact and are reported", (
  expect(counts.skipped).toEqual(['theme.dark']);expect(counts.missing).toEqual(['future.setting']);
  expect(frozen.label).toBe('Dark Theme');expect(unknown.description).toBe('new description');
 });
+
+test("new option values keep their original labels and descriptions", () => {
+ const option={value:'future-reader',label:'Future Reader',description:'New host option'};
+ const translated=localizeUI('providers.fetch',{label:'Fetch Provider',description:'original',options:[option]});
+ expect(translated.label).toBe('URL 읽기 백엔드');
+ expect(translated.options).toEqual([option]);
+});

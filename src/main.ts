@@ -1,23 +1,19 @@
 import type { ExtensionAPI } from "@oh-my-pi/pi-coding-agent";
 import { VERSION } from "@oh-my-pi/pi-utils";
-import { applyKoreanSettings, type SettingMetadata, supportedVersion } from "./localize";
+import { applyKoreanSettings, type SettingMetadata } from "./localize";
 
 export default async function (pi: ExtensionAPI) {
 	let settings: () => Iterable<SettingMetadata> = () => [];
 	let unavailable = "";
-	if (VERSION !== supportedVersion) {
-		unavailable = `OMP ${supportedVersion} 전용 한국어팩입니다. 현재 ${VERSION}에는 적용하지 않았습니다.`;
-	} else {
-		try {
-			// The registry subpath may not exist on older hosts; load it only after checking the version.
-			const registry = await import("@oh-my-pi/pi-coding-agent/config/registry");
-			settings = registry.all;
-			applyKoreanSettings(settings());
-		} catch (error) {
-			unavailable = `설정 한국어팩을 적용하지 못했습니다: ${error instanceof Error ? error.message : String(error)}`;
-		}
+	try {
+		// Load dynamically so hosts without this API can still show the error.
+		const registry = await import("@oh-my-pi/pi-coding-agent/config/registry");
+		settings = registry.all;
+		applyKoreanSettings(settings());
+	} catch (error) {
+		unavailable = `설정 한국어팩을 적용하지 못했습니다: ${error instanceof Error ? error.message : String(error)}`;
 	}
-	pi.setLabel(`설정 한국어팩 ${supportedVersion}`);
+	pi.setLabel("설정 한국어팩");
 	pi.on("session_start", (_event, ctx) => {
 		if (unavailable) ctx.ui.notify(unavailable, "warning");
 		else applyKoreanSettings(settings());

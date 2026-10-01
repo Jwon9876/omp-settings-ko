@@ -1,7 +1,7 @@
 {
   "name": "omp-settings-ko",
-  "version": "0.2.0",
-  "description": "Korean display translations for OMP 18.4.6 settings",
+  "version": "0.2.1",
+  "description": "Korean display translations for OMP settings",
   "type": "module",
   "license": "MIT",
   "author": "Jwon9876",
@@ -25,8 +25,8 @@
     "@typescript/native-preview": "7.0.0-dev.20260707.2"
   },
   "peerDependencies": {
-    "@oh-my-pi/pi-coding-agent": "18.4.6",
-    "@oh-my-pi/pi-utils": "18.4.6"
+    "@oh-my-pi/pi-coding-agent": "*",
+    "@oh-my-pi/pi-utils": "*"
   },
   "peerDependenciesMeta": {
     "@oh-my-pi/pi-coding-agent": {"optional": true},
