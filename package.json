@@ -1,6 +1,6 @@
 {
   "name": "omp-settings-ko",
-  "version": "0.2.0-rc.0",
+  "version": "0.2.0",
   "description": "Korean display translations for OMP 18.4.6 settings",
   "type": "module",
   "license": "MIT",
